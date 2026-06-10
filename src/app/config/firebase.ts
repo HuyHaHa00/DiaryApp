@@ -1,9 +1,11 @@
 // src/app/config/firebase.ts
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { initializeApp } from "firebase/app";
-import { initializeAuth, Auth } from "firebase/auth";
+import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
+import { Auth, initializeAuth } from "firebase/auth";
 import { initializeFirestore, persistentLocalCache } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Platform } from "react-native";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBzUQe3zOINFo5O1FKGaZw3WgVOd_pen0I",
@@ -17,10 +19,16 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-// Giải pháp tối ưu: Sử dụng require động ép kiểu 'any' để dập tắt hoàn toàn cảnh báo TS
+
+if (Platform.OS === "web") {
+  initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider("6Le6EhctAAAAAJTIhUyoUw2JkrOctEAC18eh7JDp"),
+    isTokenAutoRefreshEnabled: true,
+  });
+}
+
 const getMobilePersistence = () => {
   try {
-    // @ts-ignore - Bỏ qua kiểm tra TypeScript dòng này vì nó thuộc môi trường di động
     const { getReactNativePersistence } = require("firebase/auth/react-native");
     return getReactNativePersistence(AsyncStorage);
   } catch (error) {
@@ -28,7 +36,6 @@ const getMobilePersistence = () => {
   }
 };
 
-// Trên Mobile: Gọi hàm lưu trữ thông qua hàm bổ trợ an toàn
 const auth: Auth = initializeAuth(app, {
   persistence: getMobilePersistence(),
 });
@@ -40,3 +47,4 @@ const db = initializeFirestore(app, {
 const storage = getStorage(app);
 
 export { app, auth, db, storage };
+

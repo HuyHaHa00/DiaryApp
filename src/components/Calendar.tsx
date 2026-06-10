@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { DiaryEntry } from "./DiaryCard";
 import type { Mood } from "./MoodSelector";
@@ -28,8 +28,29 @@ const getLocalDateString = (d: Date) => {
 
 export default function Calendar({ entries, onDayPress }: CalendarProps) {
   const today = new Date();
-  const currentYear = today.getFullYear();
-  const currentMonth = today.getMonth();
+  const [currentYear, setCurrentYear] = useState(today.getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(today.getMonth());
+
+  const handlePrevMonth = () => {
+    if (currentMonth === 0) {
+      setCurrentMonth(11);
+      setCurrentYear(currentYear - 1);
+    } else {
+      setCurrentMonth(currentMonth - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (currentYear === today.getFullYear() && currentMonth === today.getMonth()) {
+      return; // Khóa không cho sang tháng tương lai
+    }
+    if (currentMonth === 11) {
+      setCurrentMonth(0);
+      setCurrentYear(currentYear + 1);
+    } else {
+      setCurrentMonth(currentMonth + 1);
+    }
+  };
 
   const daysGrid = useMemo(() => {
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
@@ -67,9 +88,23 @@ export default function Calendar({ entries, onDayPress }: CalendarProps) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity onPress={handlePrevMonth} style={styles.monthNavBtn}>
+          <Text style={styles.monthNavText}>{"<"}</Text>
+        </TouchableOpacity>
+
         <Text style={styles.monthTitle}>
           {monthNames[currentMonth]} {currentYear}
         </Text>
+
+        <TouchableOpacity 
+          onPress={handleNextMonth} 
+          style={styles.monthNavBtn}
+          disabled={currentYear === today.getFullYear() && currentMonth === today.getMonth()}
+        >
+          <Text style={[styles.monthNavText, currentYear === today.getFullYear() && currentMonth === today.getMonth() && styles.monthNavTextDisabled]}>
+            {">"}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.weekRow}>
@@ -140,8 +175,22 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   header: {
-    marginBottom: 8,
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
+    marginBottom: 8,
+  },
+  monthNavBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+  },
+  monthNavText: {
+    fontSize: 18,
+    color: "#4A90E2",
+    fontWeight: "bold",
+  },
+  monthNavTextDisabled: {
+    color: "#ccc",
   },
   monthTitle: {
     fontSize: 16,

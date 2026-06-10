@@ -78,6 +78,7 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
           onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
+          onSubmitEditing={handleAuth}
         />
 
         <TextInput
@@ -87,6 +88,7 @@ export default function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
           onChangeText={setPassword}
           secureTextEntry
           autoCapitalize="none"
+          onSubmitEditing={handleAuth}
         />
 
         <TouchableOpacity

@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import AuthScreen from "../screens/AuthScreen";
 import DiaryCard, { DiaryEntry } from "../components/DiaryCard";
+import Calendar from "../components/Calendar";
 import { auth, db } from "./config/firebase";
 import type { Mood } from "../components/MoodSelector";
 
@@ -79,6 +80,34 @@ export default function Index() {
     await signOut(auth);
   };
 
+  const getLocalDateString = (d: Date) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const handleDayPress = (dateString: string, existingEntryId?: string) => {
+    if (existingEntryId) {
+      router.push(`/${existingEntryId}`);
+    } else {
+      router.push(`/create?date=${dateString}`);
+    }
+  };
+
+  const todayStr = getLocalDateString(new Date());
+  const todayEntry = entries.find(e => {
+    return getLocalDateString(new Date(e.createdAt)) === todayStr;
+  });
+
+  const handleFabPress = () => {
+    if (todayEntry) {
+      router.push(`/${todayEntry.id}`);
+    } else {
+      router.push(`/create?date=${todayStr}`);
+    }
+  };
+
   if (initializing) {
     return (
       <View style={styles.center}>
@@ -126,6 +155,10 @@ export default function Index() {
             </TouchableOpacity>
           )}
         </View>
+      </View>
+
+      <View style={{ paddingHorizontal: 16 }}>
+        <Calendar entries={entries} onDayPress={handleDayPress} />
       </View>
 
       {/* Mood Filter Bar */}
@@ -185,8 +218,8 @@ export default function Index() {
       {/* FAB */}
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => router.push("/create")}
-        accessibilityLabel="Viết nhật ký mới"
+        onPress={handleFabPress}
+        accessibilityLabel="Viết nhật ký"
       >
         <Text style={styles.fabIcon}>+</Text>
       </TouchableOpacity>

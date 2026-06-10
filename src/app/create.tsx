@@ -1,5 +1,5 @@
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { onAuthStateChanged, User } from "firebase/auth";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -25,6 +25,7 @@ import MoodSelector, { Mood } from "../components/MoodSelector";
 import { auth, db } from "./config/firebase";
 
 export default function CreateScreen() {
+  const { date } = useLocalSearchParams<{ date?: string }>();
   const [user, setUser] = useState<User | null>(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -36,6 +37,20 @@ export default function CreateScreen() {
   const [images, setImages] = useState<ImageItem[]>([]);
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autoSavedId = useRef<string | null>(null);
+  const entryDate = useRef<string | null>(null);
+
+  if (!entryDate.current) {
+    if (date) {
+      const [y, m, d] = date.split('-').map(Number);
+      if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+        entryDate.current = new Date(y, m - 1, d, 12, 0, 0).toISOString();
+      } else {
+        entryDate.current = new Date().toISOString();
+      }
+    } else {
+      entryDate.current = new Date().toISOString();
+    }
+  }
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, setUser);
@@ -68,7 +83,7 @@ export default function CreateScreen() {
           content: content.trim(),
           mood,
           images,
-          createdAt: new Date().toISOString(),
+          createdAt: entryDate.current,
           draft: true,
         });
         autoSavedId.current = ref.id;
@@ -99,7 +114,7 @@ export default function CreateScreen() {
         content: content.trim(),
         mood,
         images,
-        createdAt: new Date().toISOString(),
+        createdAt: entryDate.current,
         draft: false,
         updatedAt: serverTimestamp(),
       };

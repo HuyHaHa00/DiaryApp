@@ -130,8 +130,9 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: "#fff",
     borderRadius: 16,
-    padding: 16,
-    marginBottom: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    marginBottom: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -139,7 +140,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   header: {
-    marginBottom: 12,
+    marginBottom: 8,
     alignItems: "center",
   },
   monthTitle: {
@@ -164,10 +165,10 @@ const styles = StyleSheet.create({
   },
   dayCell: {
     width: "14.28%", // 100% / 7
-    aspectRatio: 0.8,
+    height: 48, // Chiều cao cố định gọn gàng hơn
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 4,
+    paddingVertical: 2,
     borderRadius: 8,
   },
   todayCell: {
@@ -185,8 +186,9 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   dateNumberWithEntry: {
-    fontSize: 11, // Nhỏ hơn nếu có emoji
+    fontSize: 10, // Nhỏ hơn nếu có emoji
     color: "#888",
+    marginBottom: -2,
   },
   todayText: {
     color: "#4A90E2",
@@ -196,10 +198,10 @@ const styles = StyleSheet.create({
     color: "#ccc",
   },
   emojiText: {
-    fontSize: 20,
-    lineHeight: 24,
+    fontSize: 18,
+    lineHeight: 22,
   },
   emptyEmojiSpace: {
-    height: 24,
+    height: 22,
   },
 });

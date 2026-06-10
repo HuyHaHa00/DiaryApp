@@ -11,6 +11,7 @@ import {
   persistentLocalCache,
   persistentMultipleTabManager,
 } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBzUQe3zOINFo5O1FKGaZw3WgVOd_pen0I",
@@ -35,4 +36,6 @@ const db = initializeFirestore(app, {
   }),
 });
 
-export { app, auth, db };
+const storage = getStorage(app);
+
+export { app, auth, db, storage };

@@ -1,18 +1,44 @@
 import { Stack } from "expo-router";
 import React from "react";
-import { Platform, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Platform, StyleSheet, View } from "react-native";
+import { DiaryProvider, useDiary } from "../context/DiaryContext";
+import AuthScreen from "../screens/AuthScreen";
+
+function RootStack() {
+  const { user, loadingAuth } = useDiary();
+
+  if (loadingAuth) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#f7f3ee" }}>
+        <ActivityIndicator size="large" color="#4A90E2" />
+      </View>
+    );
+  }
+
+  if (!user) {
+    return <AuthScreen onLoginSuccess={() => {}} />;
+  }
+
+  return <Stack screenOptions={{ headerShown: false }} />;
+}
 
 export default function RootLayout() {
   if (Platform.OS === "web") {
     return (
-      <View style={styles.webOuter}>
-        <View style={styles.phoneFrame}>
-          <Stack screenOptions={{ headerShown: false }} />
+      <DiaryProvider>
+        <View style={styles.webOuter}>
+          <View style={styles.phoneFrame}>
+            <RootStack />
+          </View>
         </View>
-      </View>
+      </DiaryProvider>
     );
   }
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <DiaryProvider>
+      <RootStack />
+    </DiaryProvider>
+  );
 }
 
 const styles = StyleSheet.create({

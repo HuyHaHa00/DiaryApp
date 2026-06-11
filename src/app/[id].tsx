@@ -187,27 +187,35 @@ export default function DetailScreen() {
     }
   };
 
-  const handleDelete = () => {
-    Alert.alert(
-      "Xoá nhật ký",
-      "Bạn có chắc muốn xoá bài viết này không? Hành động này không thể hoàn tác.",
-      [
-        { text: "Huỷ", style: "cancel" },
-        {
-          text: "Xoá",
-          style: "destructive",
-          onPress: async () => {
-            if (!user || !id) return;
-            await deleteDoc(doc(db, "users", user.uid, "entries", id));
-            if (router.canGoBack()) {
-              router.back();
-            } else {
-              router.replace("/");
-            }
+  const handleDelete = async () => {
+    const doDelete = async () => {
+      if (!user || !id) return;
+      await deleteDoc(doc(db, "users", user.uid, "entries", id));
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace("/");
+      }
+    };
+
+    if (Platform.OS === "web") {
+      if (window.confirm("Bạn có chắc muốn xoá bài viết này không? Hành động này không thể hoàn tác.")) {
+        await doDelete();
+      }
+    } else {
+      Alert.alert(
+        "Xoá nhật ký",
+        "Bạn có chắc muốn xoá bài viết này không? Hành động này không thể hoàn tác.",
+        [
+          { text: "Huỷ", style: "cancel" },
+          {
+            text: "Xoá",
+            style: "destructive",
+            onPress: doDelete,
           },
-        },
-      ]
-    );
+        ]
+      );
+    }
   };
 
   if (loading) {

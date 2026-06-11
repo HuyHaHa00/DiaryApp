@@ -23,13 +23,20 @@ import { storage } from "./config/firebase";
 import { ImageItem } from "../components/DiaryCard";
 import MoodSelector, { Mood } from "../components/MoodSelector";
 import { auth, db } from "./config/firebase";
+import { useTheme } from "../context/ThemeContext";
 
 export default function CreateScreen() {
   const { date } = useLocalSearchParams<{ date?: string }>();
+  const { colors, isDark } = useTheme();
   const [user, setUser] = useState<User | null>(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [mood, setMood] = useState<Mood | null>(null);
+  
+  // Tags state
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
+
   const [saving, setSaving] = useState(false);
   const [isViewerVisible, setIsViewerVisible] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -57,10 +64,26 @@ export default function CreateScreen() {
     return unsub;
   }, []);
 
-  // Auto-save draft to Firestore 3s after user stops typing
+  const handleTagInput = (text: string) => {
+    if (text.endsWith(' ') || text.endsWith(',')) {
+      const newTag = text.replace(/[, ]/g, '').trim();
+      if (newTag && !tags.includes(newTag)) {
+        setTags([...tags, newTag]);
+      }
+      setTagInput("");
+    } else {
+      setTagInput(text);
+    }
+  };
+
+  const removeTag = (t: string) => {
+    setTags(tags.filter(tag => tag !== t));
+  };
+
+  // Auto-save
   useEffect(() => {
     if (!user) return;
-    if (!title.trim() && !content.trim()) {
+    if (!title.trim() && !content.trim() && images.length === 0 && tags.length === 0) {
       setSaveStatus("idle");
       return;
     }
@@ -70,7 +93,7 @@ export default function CreateScreen() {
     return () => {
       if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     };
-  }, [title, content, mood, user, images]);
+  }, [title, content, mood, user, images, tags]);
 
   const autoSave = async () => {
     if (!user || (!title.trim() && !content.trim())) return;
@@ -83,6 +106,7 @@ export default function CreateScreen() {
           content: content.trim(),
           mood,
           images,
+          tags,
           createdAt: entryDate.current,
           draft: true,
         });
@@ -90,7 +114,7 @@ export default function CreateScreen() {
       } else {
         await setDoc(
           doc(db, "users", user.uid, "entries", autoSavedId.current),
-          { title: title.trim() || "(Không có tiêu đề)", content: content.trim(), mood, images, draft: true },
+          { title: title.trim() || "(Không có tiêu đề)", content: content.trim(), mood, images, tags, draft: true },
           { merge: true }
         );
       }
@@ -106,6 +130,15 @@ export default function CreateScreen() {
       Alert.alert("Trống rỗng", "Hãy viết gì đó trước khi lưu nhé!");
       return;
     }
+    
+    // Nếu có tag đang gõ dở, hãy add nốt vào
+    let finalTags = [...tags];
+    if (tagInput.trim()) {
+       finalTags.push(tagInput.trim());
+       setTags(finalTags);
+       setTagInput("");
+    }
+
     setSaving(true);
     try {
       const { setDoc, doc } = await import("firebase/firestore");
@@ -114,6 +147,7 @@ export default function CreateScreen() {
         content: content.trim(),
         mood,
         images,
+        tags: finalTags,
         createdAt: entryDate.current,
         draft: false,
         updatedAt: serverTimestamp(),
@@ -212,11 +246,11 @@ export default function CreateScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.background }]}>
         <TouchableOpacity 
           onPress={() => {
             if (router.canGoBack()) {
@@ -227,19 +261,22 @@ export default function CreateScreen() {
           }} 
           style={styles.backBtn}
         >
-          <Text style={styles.backText}>← Quay lại</Text>
+          <Text style={[styles.backText, { color: colors.primary }]}>← Quay lại</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          onPress={handleSave}
-          style={styles.saveBtn}
-          disabled={saving}
-        >
-          {saving ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <Text style={styles.saveText}>Lưu</Text>
-          )}
-        </TouchableOpacity>
+        
+        <View style={styles.headerRight}>
+          <TouchableOpacity
+            onPress={handleSave}
+            style={[styles.saveBtn, { backgroundColor: colors.primary }]}
+            disabled={saving}
+          >
+            {saving ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text style={styles.saveText}>Lưu</Text>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
@@ -248,24 +285,41 @@ export default function CreateScreen() {
         keyboardShouldPersistTaps="handled"
       >
         {/* Mood selector */}
-        <Text style={styles.sectionLabel}>Tâm trạng hôm nay</Text>
+        <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Tâm trạng hôm nay</Text>
         <MoodSelector selected={mood} onChange={setMood} />
 
         {/* Title */}
         <TextInput
-          style={styles.titleInput}
+          style={[styles.titleInput, { color: colors.text, borderBottomColor: colors.border }]}
           placeholder="Tiêu đề..."
-          placeholderTextColor="#ccc"
+          placeholderTextColor={colors.textSecondary}
           value={title}
           onChangeText={setTitle}
           maxLength={120}
         />
 
+        {/* Tags */}
+        <View style={styles.tagsContainer}>
+          {tags.map(t => (
+            <TouchableOpacity key={t} style={[styles.tagChip, { backgroundColor: colors.primary + "20" }]} onPress={() => removeTag(t)}>
+              <Text style={[styles.tagChipText, { color: colors.primary }]}>#{t} ✕</Text>
+            </TouchableOpacity>
+          ))}
+          <TextInput
+            style={[styles.tagInput, { color: colors.text }]}
+            placeholder={tags.length === 0 ? "Thêm thẻ (cách bằng dấu phẩy)..." : "Thêm thẻ..."}
+            placeholderTextColor={colors.textSecondary}
+            value={tagInput}
+            onChangeText={handleTagInput}
+            onSubmitEditing={() => handleTagInput(tagInput + ",")}
+          />
+        </View>
+
         {/* Content */}
         <TextInput
-          style={styles.contentInput}
+          style={[styles.contentInput, { color: colors.text }]}
           placeholder="Hôm nay bạn muốn kể gì nào..."
-          placeholderTextColor="#ccc"
+          placeholderTextColor={colors.textSecondary}
           value={content}
           onChangeText={setContent}
           multiline
@@ -294,7 +348,7 @@ export default function CreateScreen() {
                 )}
                 {img.status === 'error' && (
                   <View style={styles.imageOverlay}>
-                    <Text style={{color: 'red'}}>Lỗi</Text>
+                    <Text style={{color: '#ff4757'}}>Lỗi</Text>
                   </View>
                 )}
                 <TouchableOpacity style={styles.removeBtn} onPress={() => removeImage(img.id)}>
@@ -313,36 +367,36 @@ export default function CreateScreen() {
       </ScrollView>
 
       {/* Bottom toolbar */}
-      <View style={styles.toolbar}>
+      <View style={[styles.toolbar, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
         <View style={styles.toolbarContent}>
-          <TouchableOpacity onPress={pickImage} style={styles.attachBtn}>
-            <Text style={styles.attachText}>📷 Thêm ảnh</Text>
+          <TouchableOpacity onPress={pickImage} style={[styles.attachBtn, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.attachText, { color: colors.text }]}>📷 Thêm ảnh</Text>
           </TouchableOpacity>
           {saveStatus === "idle" && (
-          <Text style={[styles.autoSaveHint, styles.statusIdle]}>
-            📝 Bắt đầu viết để tự động lưu nháp
-          </Text>
-        )}
-        {saveStatus === "changed" && (
-          <Text style={[styles.autoSaveHint, styles.statusChanged]}>
-            ⏳ Đang chờ lưu nháp...
-          </Text>
-        )}
-        {saveStatus === "saving" && (
-          <Text style={[styles.autoSaveHint, styles.statusSaving]}>
-            🔄 Đang lưu bản nháp lên đám mây...
-          </Text>
-        )}
-        {saveStatus === "saved" && (
-          <Text style={[styles.autoSaveHint, styles.statusSaved]}>
-            ☁️ Bản nháp đã được lưu tự động
-          </Text>
-        )}
-        {saveStatus === "error" && (
-          <Text style={[styles.autoSaveHint, styles.statusError]}>
-            ⚠️ Không thể lưu nháp.
-          </Text>
-        )}
+            <Text style={[styles.autoSaveHint, { color: colors.textSecondary }]}>
+              📝 Bắt đầu viết để tự động lưu nháp
+            </Text>
+          )}
+          {saveStatus === "changed" && (
+            <Text style={[styles.autoSaveHint, { color: colors.danger }]}>
+              ⏳ Đang chờ lưu nháp...
+            </Text>
+          )}
+          {saveStatus === "saving" && (
+            <Text style={[styles.autoSaveHint, { color: colors.primary }]}>
+              🔄 Đang lưu lên mây...
+            </Text>
+          )}
+          {saveStatus === "saved" && (
+            <Text style={[styles.autoSaveHint, { color: colors.success }]}>
+              ☁️ Đã lưu tự động
+            </Text>
+          )}
+          {saveStatus === "error" && (
+            <Text style={[styles.autoSaveHint, { color: colors.danger }]}>
+              ⚠️ Không thể lưu nháp.
+            </Text>
+          )}
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -352,7 +406,6 @@ export default function CreateScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f7f3ee",
   },
   header: {
     flexDirection: "row",
@@ -362,15 +415,18 @@ const styles = StyleSheet.create({
     paddingTop: 52,
     paddingBottom: 12,
   },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
   backBtn: {
     padding: 8,
   },
   backText: {
     fontSize: 15,
-    color: "#4A90E2",
   },
   saveBtn: {
-    backgroundColor: "#4A90E2",
     paddingHorizontal: 20,
     paddingVertical: 8,
     borderRadius: 10,
@@ -391,7 +447,6 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     fontSize: 12,
-    color: "#aaa",
     textTransform: "uppercase",
     letterSpacing: 1,
     marginBottom: 4,
@@ -399,16 +454,35 @@ const styles = StyleSheet.create({
   titleInput: {
     fontSize: 22,
     fontWeight: "700",
-    color: "#222",
     marginTop: 16,
     marginBottom: 12,
     paddingVertical: 4,
     borderBottomWidth: 1,
-    borderBottomColor: "#ebe6df",
+  },
+  tagsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    marginBottom: 16,
+    gap: 8,
+  },
+  tagChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  tagChipText: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  tagInput: {
+    flex: 1,
+    minWidth: 120,
+    fontSize: 14,
+    paddingVertical: 6,
   },
   contentInput: {
     fontSize: 15,
-    color: "#444",
     lineHeight: 24,
     minHeight: 240,
   },
@@ -416,32 +490,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: "#ebe6df",
-    backgroundColor: "#f7f3ee",
     alignItems: "center",
   },
   autoSaveHint: {
     fontSize: 12,
-    color: "#bbb",
-  },
-  statusIdle: {
-    color: "#aaa",
-  },
-  statusChanged: {
-    color: "#E67E22",
-    fontWeight: "500",
-  },
-  statusSaving: {
-    color: "#2980B9",
-    fontWeight: "500",
-  },
-  statusSaved: {
-    color: "#27AE60",
-    fontWeight: "600",
-  },
-  statusError: {
-    color: "#C0392B",
-    fontWeight: "600",
   },
   toolbarContent: {
     flexDirection: "row",
@@ -451,12 +503,10 @@ const styles = StyleSheet.create({
   },
   attachBtn: {
     padding: 8,
-    backgroundColor: "#eee",
     borderRadius: 8,
   },
   attachText: {
     fontSize: 14,
-    color: "#333",
   },
   imageGallery: {
     flexDirection: "row",

@@ -12,6 +12,7 @@ import {
 import { router } from "expo-router";
 import DiaryCard from "../../components/DiaryCard";
 import { useDiary } from "../../context/DiaryContext";
+import { useTheme } from "../../context/ThemeContext";
 import type { Mood } from "../../components/MoodSelector";
 
 const MOOD_LIST: { key: Mood; emoji: string; label: string }[] = [
@@ -24,6 +25,7 @@ const MOOD_LIST: { key: Mood; emoji: string; label: string }[] = [
 
 export default function ListScreen() {
   const { entries, loadingEntries } = useDiary();
+  const { colors } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedMoodFilter, setSelectedMoodFilter] = useState<Mood | null>(null);
 
@@ -41,24 +43,24 @@ export default function ListScreen() {
   });
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Nhật ký của tôi</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Nhật ký của tôi</Text>
       </View>
 
       <View style={styles.searchWrapper}>
-        <View style={styles.searchBar}>
+        <View style={[styles.searchBar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <Text style={styles.searchIcon}>🔍</Text>
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: colors.text }]}
             placeholder="Tìm kiếm nhật ký..."
-            placeholderTextColor="#aaa"
+            placeholderTextColor={colors.textSecondary}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery("")} style={styles.clearBtn}>
-              <Text style={styles.clearBtnText}>✕</Text>
+              <Text style={[styles.clearBtnText, { color: colors.textSecondary }]}>✕</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -67,20 +69,20 @@ export default function ListScreen() {
       <View style={styles.filterWrapper}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
           <TouchableOpacity
-            style={[styles.filterChip, !selectedMoodFilter && styles.filterChipActive]}
+            style={[styles.filterChip, !selectedMoodFilter ? { backgroundColor: colors.primary, borderColor: colors.primary } : { backgroundColor: colors.surface, borderColor: colors.border }]}
             onPress={() => setSelectedMoodFilter(null)}
           >
-            <Text style={[styles.filterChipText, !selectedMoodFilter && styles.filterChipTextActive]}>
+            <Text style={[styles.filterChipText, !selectedMoodFilter ? { color: "#fff" } : { color: colors.text }]}>
               ✨ Tất cả
             </Text>
           </TouchableOpacity>
           {MOOD_LIST.map((m) => (
             <TouchableOpacity
               key={m.key}
-              style={[styles.filterChip, selectedMoodFilter === m.key && styles.filterChipActive]}
+              style={[styles.filterChip, selectedMoodFilter === m.key ? { backgroundColor: colors.primary, borderColor: colors.primary } : { backgroundColor: colors.surface, borderColor: colors.border }]}
               onPress={() => setSelectedMoodFilter(selectedMoodFilter === m.key ? null : m.key)}
             >
-              <Text style={[styles.filterChipText, selectedMoodFilter === m.key && styles.filterChipTextActive]}>
+              <Text style={[styles.filterChipText, selectedMoodFilter === m.key ? { color: "#fff" } : { color: colors.text }]}>
                 {m.emoji} {m.label}
               </Text>
             </TouchableOpacity>
@@ -90,17 +92,17 @@ export default function ListScreen() {
 
       {loadingEntries ? (
         <View style={styles.center}>
-          <ActivityIndicator color="#4A90E2" />
+          <ActivityIndicator color={colors.primary} />
         </View>
       ) : entries.length === 0 ? (
         <View style={styles.empty}>
           <Text style={styles.emptyEmoji}>📖</Text>
-          <Text style={styles.emptyText}>Chưa có nhật ký nào.</Text>
+          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Chưa có nhật ký nào.</Text>
         </View>
       ) : filteredEntries.length === 0 ? (
         <View style={styles.empty}>
           <Text style={styles.emptyEmoji}>🔍</Text>
-          <Text style={styles.emptyText}>Không tìm thấy kết quả.</Text>
+          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Không tìm thấy kết quả.</Text>
         </View>
       ) : (
         <FlatList
@@ -118,22 +120,20 @@ export default function ListScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f7f3ee" },
+  container: { flex: 1 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   header: { paddingTop: 52, paddingHorizontal: 20, paddingBottom: 16 },
-  title: { fontSize: 24, fontWeight: "bold", color: "#222" },
+  title: { fontSize: 24, fontWeight: "bold" },
   searchWrapper: { paddingHorizontal: 16, marginBottom: 8 },
-  searchBar: { flexDirection: "row", alignItems: "center", backgroundColor: "#fff", borderRadius: 12, paddingHorizontal: 12, height: 44, shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 2 },
+  searchBar: { flexDirection: "row", alignItems: "center", borderRadius: 12, paddingHorizontal: 12, height: 44, borderWidth: 1 },
   searchIcon: { fontSize: 16, marginRight: 8 },
-  searchInput: { flex: 1, fontSize: 14, color: "#222", paddingVertical: 8 },
+  searchInput: { flex: 1, fontSize: 14, paddingVertical: 8 },
   clearBtn: { padding: 6 },
-  clearBtnText: { fontSize: 14, color: "#aaa" },
+  clearBtnText: { fontSize: 14 },
   filterWrapper: { marginBottom: 12 },
   filterScroll: { paddingHorizontal: 16, paddingVertical: 4, gap: 8 },
-  filterChip: { flexDirection: "row", alignItems: "center", backgroundColor: "#fff", paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: "#ebe6df" },
-  filterChipActive: { backgroundColor: "#EAF4FF", borderColor: "#4A90E2" },
-  filterChipText: { fontSize: 13, color: "#666" },
-  filterChipTextActive: { color: "#4A90E2", fontWeight: "600" },
+  filterChip: { flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1 },
+  filterChipText: { fontSize: 13 },
   list: { paddingHorizontal: 16, paddingBottom: 24 },
   empty: { flex: 1, justifyContent: "center", alignItems: "center" },
   emptyEmoji: { fontSize: 48, marginBottom: 12 },

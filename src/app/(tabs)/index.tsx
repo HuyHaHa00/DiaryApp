@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Calendar from "../../components/Calendar";
 import { useDiary } from "../../context/DiaryContext";
+import { useTheme } from "../../context/ThemeContext";
 
 const FORTUNE_QUOTES = [
   "Hôm nay là một ngày tuyệt vời để bắt đầu những điều mới mẻ!",
@@ -22,6 +23,7 @@ const FORTUNE_QUOTES = [
 
 export default function CalendarScreen() {
   const { entries } = useDiary();
+  const { colors } = useTheme();
   const [todayQuote, setTodayQuote] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [scaleAnim] = useState(new Animated.Value(0.8));
@@ -105,29 +107,29 @@ export default function CalendarScreen() {
     hour < 12 ? "Chào buổi sáng ☀️" : hour < 18 ? "Buổi chiều vui vẻ 🌤" : "Buổi tối bình yên 🌙";
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.background }]}>
         <View style={styles.headerLeft}>
-          <Text style={styles.greeting}>{greeting}</Text>
-          <Text style={styles.subGreeting}>Hôm nay của bạn thế nào?</Text>
+          <Text style={[styles.greeting, { color: colors.text }]}>{greeting}</Text>
+          <Text style={[styles.subGreeting, { color: colors.textSecondary }]}>Hôm nay của bạn thế nào?</Text>
         </View>
       </View>
 
       {/* Tương tác Bánh quy tiên đoán */}
       <View style={styles.fortuneWrapper}>
         <TouchableOpacity 
-          style={styles.fortuneCard} 
+          style={[styles.fortuneCard, { backgroundColor: colors.surface, shadowColor: colors.cardShadow }]} 
           activeOpacity={0.8}
           onPress={openCookie}
         >
-          <View style={styles.fortuneIconBox}>
+          <View style={[styles.fortuneIconBox, { backgroundColor: colors.primary + "1A" }]}>
             <Text style={styles.fortuneIcon}>🥠</Text>
           </View>
           <View style={styles.fortuneTextContent}>
-            <Text style={styles.fortuneTitle}>
+            <Text style={[styles.fortuneTitle, { color: colors.text }]}>
               {todayQuote ? "Thông điệp vũ trụ của bạn" : "Bánh quy tiên đoán"}
             </Text>
-            <Text style={styles.fortuneSubtitle} numberOfLines={1}>
+            <Text style={[styles.fortuneSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
               {todayQuote ? todayQuote : "Bấm vào để xem vũ trụ muốn nhắn nhủ điều gì hôm nay!"}
             </Text>
           </View>
@@ -141,17 +143,17 @@ export default function CalendarScreen() {
       {/* Modal Popup Bánh Quy */}
       <Modal visible={showModal} transparent animationType="none">
         <Animated.View style={[styles.modalOverlay, { opacity: fadeAnim }]}>
-          <Animated.View style={[styles.modalContainer, { transform: [{ scale: scaleAnim }] }]}>
+          <Animated.View style={[styles.modalContainer, { transform: [{ scale: scaleAnim }], shadowColor: colors.cardShadow }]}>
             <ImageBackground 
-              source={{ uri: "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=600&auto=format&fit=crop" }} // Hình nền mây pastel dễ thương
+              source={{ uri: "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=600&auto=format&fit=crop" }}
               style={styles.modalBg}
               imageStyle={{ borderRadius: 24 }}
             >
-              <View style={styles.modalInner}>
+              <View style={[styles.modalInner, { backgroundColor: colors.mode === "dark" ? "rgba(30,30,30,0.85)" : "rgba(255,255,255,0.85)" }]}>
                 <Text style={styles.modalEmoji}>🌟</Text>
-                <Text style={styles.modalQuoteText}>{todayQuote}</Text>
+                <Text style={[styles.modalQuoteText, { color: colors.primary }]}>{todayQuote}</Text>
                 
-                <TouchableOpacity style={styles.modalCloseBtn} onPress={closeModal}>
+                <TouchableOpacity style={[styles.modalCloseBtn, { backgroundColor: colors.primary }]} onPress={closeModal}>
                   <Text style={styles.modalCloseText}>Tuyệt vời!</Text>
                 </TouchableOpacity>
               </View>
@@ -167,7 +169,6 @@ export default function CalendarScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f7f3ee",
   },
   header: {
     flexDirection: "row",
@@ -176,7 +177,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 52,
     paddingBottom: 0,
-    backgroundColor: "#f7f3ee",
   },
   headerLeft: {
     flex: 1,
@@ -184,11 +184,9 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#222",
   },
   subGreeting: {
     fontSize: 13,
-    color: "#999",
     marginTop: 2,
   },
   fortuneWrapper: {
@@ -197,13 +195,11 @@ const styles = StyleSheet.create({
   },
   fortuneCard: {
     flexDirection: "row",
-    backgroundColor: "#fff",
     borderRadius: 16,
     padding: 12,
     alignItems: "center",
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 1,
     shadowRadius: 6,
     elevation: 3,
   },
@@ -211,7 +207,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#FFF4E5",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
@@ -225,12 +220,10 @@ const styles = StyleSheet.create({
   fortuneTitle: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#222",
     marginBottom: 2,
   },
   fortuneSubtitle: {
     fontSize: 13,
-    color: "#888",
   },
   modalOverlay: {
     flex: 1,
@@ -242,12 +235,11 @@ const styles = StyleSheet.create({
   modalContainer: {
     width: "100%",
     maxWidth: 320,
-    aspectRatio: 1, // Hình vuông vức
+    aspectRatio: 1,
     borderRadius: 24,
     elevation: 10,
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 1,
     shadowRadius: 20,
   },
   modalBg: {
@@ -257,7 +249,6 @@ const styles = StyleSheet.create({
   },
   modalInner: {
     flex: 1,
-    backgroundColor: "rgba(255,255,255,0.85)", // Phủ trắng nhẹ để nổi bật chữ
     borderRadius: 24,
     padding: 24,
     justifyContent: "center",
@@ -270,14 +261,12 @@ const styles = StyleSheet.create({
   modalQuoteText: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#4A90E2",
     textAlign: "center",
     lineHeight: 28,
     fontStyle: "italic",
     marginBottom: 24,
   },
   modalCloseBtn: {
-    backgroundColor: "#4A90E2",
     paddingHorizontal: 24,
     paddingVertical: 10,
     borderRadius: 20,

@@ -1,16 +1,18 @@
 import { Stack } from "expo-router";
 import React from "react";
-import { ActivityIndicator, Platform, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Platform, StyleSheet, View, useWindowDimensions } from "react-native";
 import { DiaryProvider, useDiary } from "../context/DiaryContext";
+import { ThemeProvider, useTheme } from "../context/ThemeContext";
 import AuthScreen from "../screens/AuthScreen";
 
 function RootStack() {
   const { user, loadingAuth } = useDiary();
+  const { colors } = useTheme();
 
   if (loadingAuth) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#f7f3ee" }}>
-        <ActivityIndicator size="large" color="#4A90E2" />
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background }}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -23,21 +25,41 @@ function RootStack() {
 }
 
 export default function RootLayout() {
-  if (Platform.OS === "web") {
+  const { width } = useWindowDimensions();
+  // Nếu là Web và màn hình đủ lớn (trên máy tính) thì bọc trong khung điện thoại giả lập
+  const isDesktopWeb = Platform.OS === "web" && width > 768;
+
+  if (isDesktopWeb) {
     return (
-      <DiaryProvider>
-        <View style={styles.webOuter}>
-          <View style={styles.phoneFrame}>
-            <RootStack />
+      <ThemeProvider>
+        <DiaryProvider>
+          <View style={styles.webOuter}>
+            <View style={styles.phoneFrame}>
+              <RootStack />
+            </View>
           </View>
-        </View>
-      </DiaryProvider>
+        </DiaryProvider>
+      </ThemeProvider>
     );
   }
+
+  // Trên Mobile App hoặc Mobile Web: Render tràn viền mượt mà
   return (
-    <DiaryProvider>
+    <ThemeProvider>
+      <DiaryProvider>
+        <ThemeWrapper />
+      </DiaryProvider>
+    </ThemeProvider>
+  );
+}
+
+// Bọc thêm 1 component trung gian để lấy màu nền (nếu ko thì flex 1 backgroundColor cố định)
+function ThemeWrapper() {
+  const { colors } = useTheme();
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <RootStack />
-    </DiaryProvider>
+    </View>
   );
 }
 

@@ -3,6 +3,7 @@ import { StyleSheet, Text, TouchableOpacity, View, Image } from "react-native";
 import ImageViewer from "./ImageViewer";
 import { formatDate } from "../utils/formatDate";
 import type { Mood } from "./MoodSelector";
+import { useTheme } from "../context/ThemeContext";
 
 const MOOD_EMOJI: Record<Mood, string> = {
   happy: "😆",
@@ -25,6 +26,7 @@ export interface DiaryEntry {
   content: string;
   mood: Mood | null;
   images?: ImageItem[];
+  tags?: string[];
   createdAt: string;
 }
 
@@ -34,6 +36,7 @@ interface DiaryCardProps {
 }
 
 export default function DiaryCard({ entry, onPress }: DiaryCardProps) {
+  const { colors } = useTheme();
   const [isViewerVisible, setIsViewerVisible] = React.useState(false);
   const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
 
@@ -43,18 +46,29 @@ export default function DiaryCard({ entry, onPress }: DiaryCardProps) {
 
   return (
     <TouchableOpacity
-      style={styles.card}
+      style={[styles.card, { backgroundColor: colors.surface, shadowColor: colors.cardShadow }]}
       onPress={() => onPress(entry.id)}
       activeOpacity={0.75}
     >
       <View style={styles.row}>
-        <Text style={styles.date}>{formatDate(entry.createdAt)}</Text>
+        <Text style={[styles.date, { color: colors.textSecondary }]}>{formatDate(entry.createdAt)}</Text>
         {entry.mood ? (
           <Text style={styles.mood}>{MOOD_EMOJI[entry.mood]}</Text>
         ) : null}
       </View>
-      <Text style={styles.title} numberOfLines={1}>{entry.title}</Text>
-      <Text style={styles.preview} numberOfLines={2}>{preview}</Text>
+      <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>{entry.title}</Text>
+      <Text style={[styles.preview, { color: colors.textSecondary }]} numberOfLines={2}>{preview}</Text>
+      
+      {entry.tags && entry.tags.length > 0 && (
+        <View style={styles.tagsRow}>
+          {entry.tags.map(t => (
+            <View key={t} style={[styles.tagBadge, { backgroundColor: colors.primary + "1A" }]}>
+              <Text style={[styles.tagText, { color: colors.primary }]}>#{t}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
       {entry.images && entry.images.length > 0 && (
         <View style={styles.imageRow}>
           {entry.images.slice(0, 3).map((img, index) => (
@@ -86,13 +100,11 @@ export default function DiaryCard({ entry, onPress }: DiaryCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#fff",
     borderRadius: 14,
     padding: 16,
     marginBottom: 12,
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.07,
+    shadowOpacity: 1,
     shadowRadius: 6,
     elevation: 2,
   },
@@ -104,7 +116,6 @@ const styles = StyleSheet.create({
   },
   date: {
     fontSize: 12,
-    color: "#aaa",
   },
   mood: {
     fontSize: 18,
@@ -112,13 +123,26 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#222",
     marginBottom: 4,
   },
   preview: {
     fontSize: 13,
-    color: "#777",
     lineHeight: 19,
+  },
+  tagsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: 8,
+    gap: 6,
+  },
+  tagBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  tagText: {
+    fontSize: 11,
+    fontWeight: "600",
   },
   imageRow: {
     flexDirection: "row",

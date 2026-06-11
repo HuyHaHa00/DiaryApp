@@ -4,9 +4,11 @@ import { signOut } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "../../app/config/firebase";
 import { useDiary } from "../../context/DiaryContext";
+import { useTheme, ThemeMode } from "../../context/ThemeContext";
 
 export default function ProfileScreen() {
   const { user, entries } = useDiary();
+  const { colors, mode, setMode } = useTheme();
   const [birthday, setBirthday] = useState("");
   const [location, setLocation] = useState("");
   const [saving, setSaving] = useState(false);
@@ -74,84 +76,116 @@ export default function ProfileScreen() {
 
   if (loadingProfile) {
     return (
-      <View style={styles.center}>
-         <ActivityIndicator color="#4A90E2" size="large" />
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+         <ActivityIndicator color={colors.primary} size="large" />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Cá nhân</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Cá nhân</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
         {/* User Info Card */}
-        <View style={[styles.card, styles.userCard]}>
+        <View style={[styles.card, styles.userCard, { backgroundColor: colors.surface, shadowColor: colors.cardShadow }]}>
           <Text style={styles.avatar}>👤</Text>
-          <Text style={styles.emailText}>{user?.email}</Text>
-          <Text style={styles.uidText}>Mã ID: {user?.uid.substring(0, 10)}...</Text>
+          <Text style={[styles.emailText, { color: colors.text }]}>{user?.email}</Text>
+          <Text style={[styles.uidText, { color: colors.textSecondary }]}>Mã ID: {user?.uid.substring(0, 10)}...</Text>
         </View>
 
         {/* Stats Summary */}
         <View style={styles.statsRow}>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>{entries.length}</Text>
-            <Text style={styles.statLabel}>Bài viết</Text>
+          <View style={[styles.statBox, { backgroundColor: colors.surface, shadowColor: colors.cardShadow }]}>
+            <Text style={[styles.statNumber, { color: colors.primary }]}>{entries.length}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Bài viết</Text>
           </View>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>{uniqueDays}</Text>
-            <Text style={styles.statLabel}>Ngày đồng hành</Text>
+          <View style={[styles.statBox, { backgroundColor: colors.surface, shadowColor: colors.cardShadow }]}>
+            <Text style={[styles.statNumber, { color: colors.primary }]}>{uniqueDays}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Ngày đồng hành</Text>
           </View>
         </View>
 
         {/* Personal Info Form */}
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Thông tin của bạn</Text>
+        <View style={[styles.card, { backgroundColor: colors.surface, shadowColor: colors.cardShadow }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Thông tin của bạn</Text>
           
-          <Text style={styles.inputLabel}>Ngày sinh</Text>
+          <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Ngày sinh</Text>
           <TextInput 
-            style={styles.input} 
+            style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]} 
             placeholder="VD: 01/01/2000" 
-            placeholderTextColor="#ccc"
+            placeholderTextColor={colors.textSecondary}
             value={birthday}
             onChangeText={setBirthday}
           />
 
-          <Text style={styles.inputLabel}>Nơi ở / Quê quán</Text>
+          <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Nơi ở / Quê quán</Text>
           <TextInput 
-            style={styles.input} 
+            style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]} 
             placeholder="VD: Hà Nội, Việt Nam" 
-            placeholderTextColor="#ccc"
+            placeholderTextColor={colors.textSecondary}
             value={location}
             onChangeText={setLocation}
           />
 
-          <TouchableOpacity style={styles.saveBtn} onPress={handleSaveProfile} disabled={saving}>
+          <TouchableOpacity style={[styles.saveBtn, { backgroundColor: colors.primary }]} onPress={handleSaveProfile} disabled={saving}>
             {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>Lưu thông tin</Text>}
           </TouchableOpacity>
         </View>
 
         {/* Logout */}
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <Text style={styles.logoutText}>🚪 Đăng xuất khỏi tài khoản</Text>
+        <TouchableOpacity style={[styles.logoutBtn, { backgroundColor: colors.dangerBg }]} onPress={handleLogout}>
+          <Text style={[styles.logoutText, { color: colors.danger }]}>🚪 Đăng xuất khỏi tài khoản</Text>
         </TouchableOpacity>
+
+        {/* Theme Toggles */}
+        <View style={[styles.card, { backgroundColor: colors.surface, marginTop: 16 }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Giao diện</Text>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 8 }}>
+            <ThemeOption label="Hệ thống" value="system" current={mode} onSelect={setMode} colors={colors} />
+            <ThemeOption label="Sáng" value="light" current={mode} onSelect={setMode} colors={colors} />
+            <ThemeOption label="Tối" value="dark" current={mode} onSelect={setMode} colors={colors} />
+          </View>
+        </View>
+
       </ScrollView>
     </View>
+  );
+}
+
+function ThemeOption({ label, value, current, onSelect, colors }: any) {
+  const isActive = current === value;
+  return (
+    <TouchableOpacity
+      onPress={() => onSelect(value)}
+      style={{
+        flex: 1,
+        marginHorizontal: 4,
+        paddingVertical: 10,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: isActive ? colors.primary : colors.border,
+        backgroundColor: isActive ? colors.primary + "1A" : "transparent",
+        alignItems: "center"
+      }}
+    >
+      <Text style={{ color: isActive ? colors.primary : colors.textSecondary, fontWeight: isActive ? "700" : "500" }}>
+        {label}
+      </Text>
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f7f3ee",
   },
   center: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f7f3ee",
   },
   header: {
     paddingTop: 52,
@@ -161,7 +195,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#222",
   },
   content: {
     paddingHorizontal: 16,
@@ -169,12 +202,10 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   card: {
-    backgroundColor: "#fff",
     borderRadius: 16,
     padding: 20,
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 1,
     shadowRadius: 8,
     elevation: 3,
   },
@@ -189,12 +220,10 @@ const styles = StyleSheet.create({
   emailText: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#333",
     marginBottom: 4,
   },
   uidText: {
     fontSize: 12,
-    color: "#aaa",
   },
   statsRow: {
     flexDirection: "row",
@@ -202,52 +231,42 @@ const styles = StyleSheet.create({
   },
   statBox: {
     flex: 1,
-    backgroundColor: "#fff",
     borderRadius: 16,
     padding: 16,
     alignItems: "center",
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 1,
     shadowRadius: 8,
     elevation: 3,
   },
   statNumber: {
     fontSize: 28,
     fontWeight: "800",
-    color: "#4A90E2",
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 13,
-    color: "#666",
     fontWeight: "500",
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#333",
     marginBottom: 16,
   },
   inputLabel: {
     fontSize: 13,
-    color: "#666",
     marginBottom: 6,
     fontWeight: "500",
   },
   input: {
-    backgroundColor: "#f9f9f9",
     borderWidth: 1,
-    borderColor: "#ebe6df",
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 15,
-    color: "#333",
     marginBottom: 16,
   },
   saveBtn: {
-    backgroundColor: "#4A90E2",
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: "center",
@@ -259,14 +278,12 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   logoutBtn: {
-    backgroundColor: "#FFE5E5",
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: "center",
     marginTop: 8,
   },
   logoutText: {
-    color: "#E74C3C",
     fontSize: 16,
     fontWeight: "700",
   },

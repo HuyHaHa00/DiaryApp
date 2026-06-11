@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { useDiary } from "../../context/DiaryContext";
+import { useTheme } from "../../context/ThemeContext";
 import type { Mood } from "../../components/MoodSelector";
 
 const MOOD_EMOJI: Record<Mood, string> = {
@@ -29,6 +30,7 @@ const MOOD_SCORES: Record<Mood, number> = {
 
 export default function StatsScreen() {
   const { entries } = useDiary();
+  const { colors, isDark } = useTheme();
 
   // 1. Dữ liệu cho biểu đồ thanh ngang (Tần suất)
   const moodFrequency = useMemo(() => {
@@ -82,17 +84,17 @@ export default function StatsScreen() {
   }, [entries]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Thống kê</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Thống kê</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         
         {/* Biểu đồ thanh ngang: Tần suất cảm xúc */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Tần suất cảm xúc</Text>
-          <Text style={styles.cardSubtitle}>Tổng số bài viết: {entries.length}</Text>
+        <View style={[styles.card, { backgroundColor: colors.surface, shadowColor: colors.cardShadow }]}>
+          <Text style={[styles.cardTitle, { color: colors.text }]}>Tần suất cảm xúc</Text>
+          <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>Tổng số bài viết: {entries.length}</Text>
           
           <View style={styles.barChartContainer}>
             {(Object.keys(MOOD_EMOJI) as Mood[]).map((mood) => {
@@ -101,7 +103,7 @@ export default function StatsScreen() {
               return (
                 <View key={mood} style={styles.barRow}>
                   <Text style={styles.barEmoji}>{MOOD_EMOJI[mood]}</Text>
-                  <View style={styles.barTrack}>
+                  <View style={[styles.barTrack, { backgroundColor: isDark ? "#333" : "#f0f0f0" }]}>
                     <View 
                       style={[
                         styles.barFill, 
@@ -109,7 +111,7 @@ export default function StatsScreen() {
                       ]} 
                     />
                   </View>
-                  <Text style={styles.barValue}>{count}</Text>
+                  <Text style={[styles.barValue, { color: colors.textSecondary }]}>{count}</Text>
                 </View>
               );
             })}
@@ -117,9 +119,9 @@ export default function StatsScreen() {
         </View>
 
         {/* Biểu đồ cột: Biến thiên cảm xúc 7 ngày qua */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>7 ngày gần nhất</Text>
-          <Text style={styles.cardSubtitle}>Mức độ tích cực của bạn qua từng ngày</Text>
+        <View style={[styles.card, { backgroundColor: colors.surface, shadowColor: colors.cardShadow }]}>
+          <Text style={[styles.cardTitle, { color: colors.text }]}>7 ngày gần nhất</Text>
+          <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>Mức độ tích cực của bạn qua từng ngày</Text>
           
           <View style={styles.columnChartContainer}>
             {weeklyData.map((day, idx) => {
@@ -128,7 +130,7 @@ export default function StatsScreen() {
               return (
                 <View key={idx} style={styles.columnWrapper}>
                   <Text style={styles.columnEmoji}>{day.emoji}</Text>
-                  <View style={styles.columnTrack}>
+                  <View style={[styles.columnTrack, { backgroundColor: isDark ? "#333" : "#f0f0f0" }]}>
                     <View 
                       style={[
                         styles.columnFill, 
@@ -136,7 +138,7 @@ export default function StatsScreen() {
                       ]} 
                     />
                   </View>
-                  <Text style={styles.columnLabel}>{day.label}</Text>
+                  <Text style={[styles.columnLabel, { color: colors.textSecondary }]}>{day.label}</Text>
                 </View>
               );
             })}
@@ -151,7 +153,6 @@ export default function StatsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f7f3ee",
   },
   header: {
     paddingTop: 52,
@@ -161,7 +162,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#222",
   },
   scrollContent: {
     paddingHorizontal: 16,
@@ -169,26 +169,23 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   card: {
-    backgroundColor: "#fff",
     borderRadius: 16,
     padding: 20,
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 1,
     shadowRadius: 8,
     elevation: 3,
   },
   cardTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#333",
     marginBottom: 4,
   },
   cardSubtitle: {
     fontSize: 13,
-    color: "#888",
     marginBottom: 20,
   },
+
   // Horizontal Bar Chart
   barChartContainer: {
     gap: 12,
@@ -204,7 +201,6 @@ const styles = StyleSheet.create({
   barTrack: {
     flex: 1,
     height: 12,
-    backgroundColor: "#f0f0f0",
     borderRadius: 6,
     marginRight: 12,
     overflow: "hidden",
@@ -216,7 +212,6 @@ const styles = StyleSheet.create({
   barValue: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#555",
     width: 24,
     textAlign: "right",
   },
@@ -240,7 +235,6 @@ const styles = StyleSheet.create({
   columnTrack: {
     width: 24,
     height: 100, // Chiều cao tối đa của cột
-    backgroundColor: "#f0f0f0",
     borderRadius: 12,
     justifyContent: "flex-end",
     marginBottom: 8,
@@ -252,7 +246,6 @@ const styles = StyleSheet.create({
   },
   columnLabel: {
     fontSize: 11,
-    color: "#888",
     fontWeight: "500",
   },
 });

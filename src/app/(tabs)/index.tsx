@@ -99,17 +99,6 @@ export default function CalendarScreen() {
   };
 
   const todayStr = getLocalDateString(new Date());
-  const todayEntry = entries.find(e => {
-    return getLocalDateString(new Date(e.createdAt)) === todayStr;
-  });
-
-  const handleFabPress = () => {
-    if (todayEntry) {
-      router.push(`/${todayEntry.id}`);
-    } else {
-      router.push(`/create?date=${todayStr}`);
-    }
-  };
 
   const hour = new Date().getHours();
   const greeting =
@@ -148,14 +137,6 @@ export default function CalendarScreen() {
       <View style={{ paddingHorizontal: 16, marginTop: 8 }}>
         <Calendar entries={entries} onDayPress={handleDayPress} />
       </View>
-
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={handleFabPress}
-        accessibilityLabel="Viết nhật ký"
-      >
-        <Text style={styles.fabIcon}>+</Text>
-      </TouchableOpacity>
 
       {/* Modal Popup Bánh Quy */}
       <Modal visible={showModal} transparent animationType="none">
@@ -209,28 +190,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#999",
     marginTop: 2,
-  },
-  fab: {
-    position: "absolute",
-    bottom: 28,
-    right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#4A90E2",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#4A90E2",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 6,
-    zIndex: 10,
-  },
-  fabIcon: {
-    fontSize: 28,
-    color: "#fff",
-    lineHeight: 32,
   },
   fortuneWrapper: {
     paddingHorizontal: 16,

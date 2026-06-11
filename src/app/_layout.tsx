@@ -56,8 +56,17 @@ export default function RootLayout() {
 // Bọc thêm 1 component trung gian để lấy màu nền (nếu ko thì flex 1 backgroundColor cố định)
 function ThemeWrapper() {
   const { colors } = useTheme();
+  const { height } = useWindowDimensions();
+  
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View 
+      style={{ 
+        height: Platform.OS === "web" ? height : "100%", 
+        flex: Platform.OS === "web" ? undefined : 1,
+        backgroundColor: colors.background,
+        overflow: "hidden" 
+      }}
+    >
       <RootStack />
     </View>
   );
